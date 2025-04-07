@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # セッション監査用の設定
-echo "pgaudit.log = 'all'" >> "${PGDATA}/postgresql.conf"
+echo "pgaudit.log = 'all, -read, -write'" >> "${PGDATA}/postgresql.conf"
 echo "pgaudit.log_relation = 'on'" >> "${PGDATA}/postgresql.conf"
 
 # オブジェクト監査用

@@ -61,26 +61,46 @@ postgres=# \ddp
 ### example query
 
 ```
+$ docker compose exec db psql -U postgres
 postgres=# create table sample (id int, name text);
 CREATE TABLE
-postgres=# insert into sample (id, name) values (1, 'test');
-INSERT 0 1
+postgres=# insert into sample (id, name) values (1, 'test'), (2, 'sample'), (3, 'hello');
+INSERT 0 3
+postgres=# select * from sample;
+ id |  name
+----+--------
+  1 | test
+  2 | sample
+  3 | hello
+(3 rows)
+
+postgres=# update sample set name = 'hi' where id = 3;
+UPDATE 1
+postgres=# delete from sample where id = 2;
+DELETE 1
 postgres=# select * from sample;
  id | name
 ----+------
   1 | test
-(1 row)
+  3 | hi
+(2 rows)
+
+postgres=# drop table sample;
+DROP TABLE
 ```
 
 ### check logs
 
 ```
-docker compose logs  | grep LOG | grep AUDIT
-db-1  | 2025-04-06 14:37:16.867 UTC [54] LOG:  AUDIT: SESSION,1,1,MISC,SET,,,set pgaudit.log = 'all';,<not logged>
-db-1  | 2025-04-06 14:37:30.170 UTC [54] LOG:  AUDIT: SESSION,2,1,MISC,SET,,,set pgaudit.log_relation = 'on';,<not logged>
-db-1  | 2025-04-06 14:38:17.671 UTC [54] LOG:  AUDIT: SESSION,3,1,DDL,CREATE TABLE,TABLE,public.sample,"create table sample (id int, name text);",<not logged>
-db-1  | 2025-04-06 14:38:36.237 UTC [54] LOG:  AUDIT: SESSION,4,1,WRITE,INSERT,TABLE,public.sample,"insert into sample (id, name) values (1, 'test');",<not logged>
-db-1  | 2025-04-06 14:38:46.031 UTC [54] LOG:  AUDIT: SESSION,5,1,READ,SELECT,TABLE,public.sample,select * from sample;,<not logged>
-db-1  | 2025-04-06 14:58:50.530 UTC [154] LOG:  AUDIT: OBJECT,1,1,WRITE,INSERT,TABLE,public.sample,"insert into sample (id, name) values (2, 'objsession');",<not logged>
-db-1  | 2025-04-06 14:58:53.313 UTC [154] LOG:  AUDIT: OBJECT,2,1,READ,SELECT,TABLE,public.sample,select * from sample;,<not logged>
+$ docker compose logs  | grep AUDIT
+db-1  | 2025-04-07 23:04:38.503 UTC [76] LOG:  AUDIT: SESSION,1,1,ROLE,GRANT,,,GRANT ALL ON ALL TABLES IN SCHEMA public TO auditor;,<not logged>
+db-1  | 2025-04-07 23:04:38.506 UTC [76] LOG:  AUDIT: SESSION,2,1,ROLE,ALTER DEFAULT PRIVILEGES,,,ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO auditor;,<not logged>
+db-1  | 2025-04-07 23:04:38.507 UTC [76] LOG:  AUDIT: SESSION,3,1,DDL,CREATE EXTENSION,,,CREATE EXTENSION IF NOT EXISTS pgaudit;,<not logged>
+db-1  | 2025-04-07 23:05:07.350 UTC [76] LOG:  AUDIT: SESSION,4,1,DDL,CREATE TABLE,TABLE,public.sample,"create table sample (id int, name text);",<not logged>
+db-1  | 2025-04-07 23:06:02.350 UTC [76] LOG:  AUDIT: OBJECT,5,1,WRITE,INSERT,TABLE,public.sample,"insert into sample (id, name) values (1, 'test'), (2, 'sample'), (3, 'hello');",<not logged>
+db-1  | 2025-04-07 23:06:18.419 UTC [76] LOG:  AUDIT: OBJECT,6,1,READ,SELECT,TABLE,public.sample,"select * from sample;",<not logged>
+db-1  | 2025-04-07 23:09:24.908 UTC [76] LOG:  AUDIT: OBJECT,7,1,WRITE,UPDATE,TABLE,public.sample,update sample set name = 'hi' where id = 3;,<not logged>
+db-1  | 2025-04-07 23:09:42.738 UTC [76] LOG:  AUDIT: OBJECT,8,1,WRITE,DELETE,TABLE,public.sample,delete from sample where id = 2;,<not logged>
+db-1  | 2025-04-07 23:09:48.727 UTC [76] LOG:  AUDIT: OBJECT,9,1,READ,SELECT,TABLE,public.sample,select * from sample;,<not logged>
+db-1  | 2025-04-07 23:10:03.627 UTC [76] LOG:  AUDIT: SESSION,10,1,DDL,DROP TABLE,TABLE,public.sample,drop table sample;,<not logged>
 ```
