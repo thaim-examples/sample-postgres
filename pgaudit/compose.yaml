@@ -1,0 +1,19 @@
+services:
+  db:
+    build: .
+    command: -c shared_preload_libraries=pgaudit
+    volumes:
+      - postgres_data:/var/lib/postgrdsql/data
+      - ./inits:/docker-entrypoint-initdb.d
+    ports:
+      - 5432
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+
+volumes:
+  postgres_data:
+    name: postgres-data
